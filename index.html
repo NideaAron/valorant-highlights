@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ykron | Valorant Highlights</title>
+<style>
+  :root {
+    --ink: #0e141b;
+    --panel: #151d27;
+    --line: #26323f;
+    --bone: #e9e4d8;
+    --mute: #8c97a3;
+    --kill: #ff4655;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ink);
+    color: var(--bone);
+    font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--kill); outline-offset: 2px; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  /* Hero: kill feed */
+  header { padding: 40px 0 24px; border-bottom: 1px solid var(--line); }
+  h1 {
+    font-family: Impact, "Arial Narrow Bold", "Arial Black", sans-serif;
+    font-weight: 400;
+    font-size: clamp(2.6rem, 8vw, 5.2rem);
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+  }
+  .sub { color: var(--mute); margin-top: 10px; max-width: 52ch; }
+
+  .feed { margin-top: 24px; display: grid; gap: 6px; max-width: 460px; }
+  .feed div {
+    display: flex; justify-content: space-between; gap: 12px;
+    background: var(--panel);
+    border-right: 3px solid var(--kill);
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+  .feed b { color: var(--kill); font-weight: 600; }
+  .feed span { color: var(--mute); }
+
+  /* Stats */
+  .stats { display: flex; flex-wrap: wrap; gap: 28px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .stats p { font-size: 0.85rem; color: var(--mute); }
+  .stats strong { display: block; font-size: 1.5rem; color: var(--bone); }
+
+  /* Filters */
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 18px 0 6px; }
+  .filters button {
+    background: transparent; color: var(--bone);
+    border: 1px solid var(--line); border-radius: 2px;
+    padding: 6px 14px; font: inherit; font-size: 0.9rem; cursor: pointer;
+  }
+  .filters button[aria-pressed="true"] { background: var(--kill); border-color: var(--kill); color: #fff; }
+
+  /* Clips */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 14px 0 40px; }
+  .clip { background: var(--panel); border: 1px solid var(--line); }
+  .frame { aspect-ratio: 16 / 9; background: #000; }
+  .frame iframe, .frame video { width: 100%; height: 100%; border: 0; display: block; }
+  .info { padding: 10px 12px 12px; }
+  .info h2 { font-size: 1rem; font-weight: 600; }
+  .meta { color: var(--mute); font-size: 0.85rem; margin-top: 2px; }
+  .badge {
+    display: inline-block; margin-top: 8px;
+    background: var(--kill); color: #fff;
+    font-size: 0.8rem; font-weight: 600; padding: 1px 8px; border-radius: 2px;
+  }
+  .empty { color: var(--mute); padding: 30px 0; }
+
+  footer { border-top: 1px solid var(--line); padding: 18px 0 30px; color: var(--mute); font-size: 0.85rem; }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Valorant<br>Highlights</h1>
+    <p class="sub">My best clutches, aces, and plays. Use the filters to sort by agent or map.</p>
+    <div class="feed" aria-hidden="true">
+      <div><b>Ykron</b><span>Ace</span></div>
+      <div><b>Ykron</b><span>1v4 Clutch</span></div>
+      <div><b>Ykron</b><span>Headshot</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="stats" aria-label="Stats">
+    <p><strong id="statClips">0</strong>Clips</p>
+    <p><strong id="statAces">0</strong>Aces</p>
+    <p><strong id="statClutch">0</strong>Clutches</p>
+    <p><strong>Radiant</strong>Peak rank</p>
+  </section>
+
+  <section class="filters" id="filters" aria-label="Filters"></section>
+
+  <main class="grid" id="grid"></main>
+</div>
+
+<footer>
+  <div class="wrap">Made by Ykron. Fan-made page, not affiliated with Riot Games.</div>
+</footer>
+
+<script>
+/*
+  EDIT THIS LIST to add your clips.
+  type: "youtube"  -> put the video ID in src  (youtube.com/watch?v=THIS_PART)
+  type: "file"     -> put the file path in src (example: "clips/ace-ascent.mp4")
+  tag: "Ace", "Clutch", "Flick", etc.
+*/
+const CLIPS = [
+  { title: "Ace on Ascent",    agent: "Jett",   map: "Ascent", tag: "Ace",    type: "youtube", src: "dQw4w9WgXcQ" },
+  { title: "1v4 Clutch",       agent: "Reyna",  map: "Haven",  tag: "Clutch", type: "youtube", src: "dQw4w9WgXcQ" },
+  { title: "Operator Flick",   agent: "Jett",   map: "Bind",   tag: "Flick",  type: "youtube", src: "dQw4w9WgXcQ" },
+  { title: "Spike Defuse",     agent: "Sage",   map: "Split",  tag: "Clutch", type: "youtube", src: "dQw4w9WgXcQ" }
+];
+
+const grid = document.getElementById("grid");
+const filters = document.getElementById("filters");
+let active = "All";
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+
+function frameHTML(c) {
+  if (c.type === "file") {
+    return `<video controls preload="metadata" src="${esc(c.src)}"></video>`;
+  }
+  return `<iframe loading="lazy" title="${esc(c.title)}"
+    src="https://www.youtube-nocookie.com/embed/${esc(c.src)}"
+    allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+}
+
+function render() {
+  const list = CLIPS.filter(c => active === "All" || c.agent === active || c.map === active);
+  grid.innerHTML = list.length ? list.map(c => `
+    <article class="clip">
+      <div class="frame">${frameHTML(c)}</div>
+      <div class="info">
+        <h2>${esc(c.title)}</h2>
+        <p class="meta">${esc(c.agent)} on ${esc(c.map)}</p>
+        <span class="badge">${esc(c.tag)}</span>
+      </div>
+    </article>`).join("") : `<p class="empty">No clips for this filter yet.</p>`;
+}
+
+function buildFilters() {
+  const names = ["All", ...new Set(CLIPS.flatMap(c => [c.agent, c.map]))];
+  filters.innerHTML = names.map(n =>
+    `<button type="button" aria-pressed="${n === active}" data-f="${esc(n)}">${esc(n)}</button>`).join("");
+}
+
+filters.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  active = b.dataset.f;
+  buildFilters();
+  render();
+});
+
+document.getElementById("statClips").textContent = CLIPS.length;
+document.getElementById("statAces").textContent = CLIPS.filter(c => c.tag === "Ace").length;
+document.getElementById("statClutch").textContent = CLIPS.filter(c => c.tag === "Clutch").length;
+
+buildFilters();
+render();
+</script>
+</body>
+</html>
