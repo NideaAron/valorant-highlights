@@ -12,6 +12,7 @@
     --bone: #e9e4d8;
     --mute: #8c97a3;
     --kill: #ff4655;
+    --cyan: #3de0ff;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -20,37 +21,59 @@
     color: var(--bone);
     font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
     line-height: 1.5;
+    cursor: crosshair;
+    overflow-x: hidden;
   }
-  a { color: inherit; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: repeating-linear-gradient(115deg, transparent 0 38px, rgba(255,255,255,.025) 38px 39px);
+  }
   :focus-visible { outline: 2px solid var(--kill); outline-offset: 2px; }
-
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
 
-  /* Hero: kill feed */
-  header { padding: 40px 0 24px; border-bottom: 1px solid var(--line); }
+  /* Hero */
+  header { position: relative; padding: 48px 0 28px; border-bottom: 1px solid var(--line); overflow: hidden; }
+  header::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -10px; width: 3px;
+    background: var(--kill); box-shadow: 0 0 24px var(--kill);
+    animation: sweep 1.3s ease-out .2s 1 forwards;
+  }
+  @keyframes sweep { to { left: 105%; } }
+
   h1 {
     font-family: Impact, "Arial Narrow Bold", "Arial Black", sans-serif;
     font-weight: 400;
     font-size: clamp(2.6rem, 8vw, 5.2rem);
     line-height: 0.95;
     letter-spacing: 0.01em;
+    animation: glitch .9s steps(2, end) .2s 1;
   }
-  .sub { color: var(--mute); margin-top: 10px; max-width: 52ch; }
+  @keyframes glitch {
+    0%   { text-shadow: 4px 0 var(--kill), -4px 0 var(--cyan); transform: translateX(-4px); }
+    25%  { text-shadow: -4px 0 var(--kill), 4px 0 var(--cyan); transform: translateX(3px); }
+    50%  { text-shadow: 3px 0 var(--kill), -3px 0 var(--cyan); transform: translateX(-2px); }
+    75%  { text-shadow: -2px 0 var(--kill), 2px 0 var(--cyan); transform: translateX(1px); }
+    100% { text-shadow: none; transform: none; }
+  }
+  .sub { color: var(--mute); margin-top: 12px; max-width: 52ch; min-height: 3.2em; }
 
-  .feed { margin-top: 24px; display: grid; gap: 6px; max-width: 460px; }
+  /* Kill feed */
+  .feed { margin-top: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 460px; min-height: 176px; }
   .feed div {
     display: flex; justify-content: space-between; gap: 12px;
-    background: var(--panel);
-    border-right: 3px solid var(--kill);
-    padding: 6px 12px;
-    font-size: 0.9rem;
+    background: var(--panel); border-right: 3px solid var(--kill);
+    padding: 6px 12px; font-size: .9rem;
+    animation: feedIn .35s ease-out;
+    transition: opacity .4s ease, transform .4s ease;
   }
+  .feed div.out { opacity: 0; transform: translateX(24px); }
   .feed b { color: var(--kill); font-weight: 600; }
   .feed span { color: var(--mute); }
+  @keyframes feedIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
 
   /* Stats */
   .stats { display: flex; flex-wrap: wrap; gap: 28px; padding: 16px 0; border-bottom: 1px solid var(--line); }
-  .stats p { font-size: 0.85rem; color: var(--mute); }
+  .stats p { font-size: .85rem; color: var(--mute); }
   .stats strong { display: block; font-size: 1.5rem; color: var(--bone); }
 
   /* Filters */
@@ -58,28 +81,87 @@
   .filters button {
     background: transparent; color: var(--bone);
     border: 1px solid var(--line); border-radius: 2px;
-    padding: 6px 14px; font: inherit; font-size: 0.9rem; cursor: pointer;
+    padding: 6px 14px; font: inherit; font-size: .9rem; cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
   }
+  .filters button:hover { border-color: var(--kill); }
   .filters button[aria-pressed="true"] { background: var(--kill); border-color: var(--kill); color: #fff; }
 
   /* Clips */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 14px 0 40px; }
-  .clip { background: var(--panel); border: 1px solid var(--line); }
-  .frame { aspect-ratio: 16 / 9; background: #000; }
-  .frame iframe, .frame video { width: 100%; height: 100%; border: 0; display: block; }
+  .clip {
+    background: var(--panel); border: 1px solid var(--line); cursor: pointer;
+    opacity: 0; transform: translateY(24px);
+    transition: opacity .5s ease var(--d, 0ms), transform .5s ease var(--d, 0ms), border-color .2s ease;
+  }
+  .clip.in { opacity: 1; transform: none; }
+  .clip:hover, .clip:focus-visible { border-color: var(--kill); }
+
+  .frame { position: relative; aspect-ratio: 16 / 9; background: #000; overflow: hidden; }
+  .frame video, .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frame::before, .frame::after {
+    content: ""; position: absolute; width: 22px; height: 22px; pointer-events: none;
+    border: 0 solid var(--kill); opacity: 0; transition: opacity .2s ease, transform .2s ease;
+  }
+  .frame::before { top: 10px; left: 10px; border-width: 2px 0 0 2px; transform: translate(8px, 8px); }
+  .frame::after { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; transform: translate(-8px, -8px); }
+  .clip:hover .frame::before, .clip:hover .frame::after,
+  .clip:focus-visible .frame::before, .clip:focus-visible .frame::after { opacity: 1; transform: none; }
+
+  .play {
+    position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px;
+    border: 2px solid var(--bone); border-radius: 50%; pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .play::after {
+    content: ""; position: absolute; left: 21px; top: 15px;
+    border-style: solid; border-width: 11px 0 11px 18px; border-color: transparent transparent transparent var(--bone);
+  }
+  .clip:hover .play { opacity: 0; transform: scale(1.4); }
+
   .info { padding: 10px 12px 12px; }
   .info h2 { font-size: 1rem; font-weight: 600; }
-  .meta { color: var(--mute); font-size: 0.85rem; margin-top: 2px; }
+  .meta { color: var(--mute); font-size: .85rem; margin-top: 2px; }
   .badge {
     display: inline-block; margin-top: 8px;
     background: var(--kill); color: #fff;
-    font-size: 0.8rem; font-weight: 600; padding: 1px 8px; border-radius: 2px;
+    font-size: .8rem; font-weight: 600; padding: 1px 8px; border-radius: 2px;
   }
   .empty { color: var(--mute); padding: 30px 0; }
 
-  footer { border-top: 1px solid var(--line); padding: 18px 0 30px; color: var(--mute); font-size: 0.85rem; }
+  /* Viewer */
+  dialog {
+    background: var(--panel); color: var(--bone); border: 1px solid var(--line);
+    width: min(960px, 94vw); padding: 0; margin: auto; overflow: hidden;
+  }
+  dialog[open] { animation: pop .25s ease-out; }
+  dialog::backdrop { background: rgba(5, 8, 12, .88); }
+  @keyframes pop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+  .vbody { aspect-ratio: 16 / 9; background: #000; }
+  .vbody video, .vbody iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .vinfo { padding: 10px 14px 12px; font-weight: 600; }
+  .close {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 2px;
+    background: rgba(14,20,27,.85); color: var(--bone); font-size: 1.2rem; cursor: pointer;
+  }
+  .close:hover { background: var(--kill); border-color: var(--kill); color: #fff; }
 
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  /* Hit marker */
+  .hit { position: fixed; z-index: 99; pointer-events: none; animation: hit .3s ease-out forwards; }
+  @keyframes hit {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(.6); }
+    to   { opacity: 0; transform: translate(-50%, -50%) scale(1.4); }
+  }
+
+  footer { border-top: 1px solid var(--line); padding: 18px 0 30px; color: var(--mute); font-size: .85rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    header::after { display: none; }
+    h1, .feed div, dialog[open] { animation: none; }
+    .clip { opacity: 1; transform: none; transition: border-color .2s ease; }
+  }
 </style>
 </head>
 <body>
@@ -87,12 +169,8 @@
 <header>
   <div class="wrap">
     <h1>Valorant<br>Highlights</h1>
-    <p class="sub">My best clutches, aces, and plays. Use the filters to sort by agent or map.</p>
-    <div class="feed" aria-hidden="true">
-      <div><b>Ykron</b><span>Ace</span></div>
-      <div><b>Ykron</b><span>1v4 Clutch</span></div>
-      <div><b>Ykron</b><span>Headshot</span></div>
-    </div>
+    <p class="sub" id="sub">My best clutches, aces, and plays. Click a clip to watch it. Use the filters to sort by agent or map.</p>
+    <div class="feed" id="feed" aria-hidden="true"></div>
   </div>
 </header>
 
@@ -101,7 +179,7 @@
     <p><strong id="statClips">0</strong>Clips</p>
     <p><strong id="statAces">0</strong>Aces</p>
     <p><strong id="statClutch">0</strong>Clutches</p>
-    <p><strong>Radiant</strong>Peak rank</p>
+    <p><strong id="statRank">-</strong>Peak rank</p>
   </section>
 
   <section class="filters" id="filters" aria-label="Filters"></section>
@@ -113,47 +191,77 @@
   <div class="wrap">Made by Ykron. Fan-made page, not affiliated with Riot Games.</div>
 </footer>
 
+<dialog id="viewer" aria-label="Clip viewer">
+  <button class="close" id="closeBtn" type="button" aria-label="Close">&times;</button>
+  <div class="vbody" id="vbody"></div>
+  <p class="vinfo" id="vinfo"></p>
+</dialog>
+
 <script>
+/* ===== EDIT HERE ===== */
+const NAME = "Ykron";
+const RANK = "Radiant";   // palitan ng totoong peak rank mo
+
 /*
-  EDIT THIS LIST to add your clips.
-  type: "youtube"  -> put the video ID in src  (youtube.com/watch?v=THIS_PART)
-  type: "file"     -> put the file path in src (example: "clips/ace-ascent.mp4")
-  tag: "Ace", "Clutch", "Flick", etc.
+  type: "file"    -> src = path ng video (halimbawa "clips/clip1.mp4.mp4")
+  type: "youtube" -> src = YouTube ID
+  tag: "Ace", "Clutch", "Flick", etc. (ang Ace at Clutch ang binibilang sa stats)
 */
 const CLIPS = [
   { title: "Clip 1", agent: "Iso",  map: "Ascent", tag: "Ace",    type: "file", src: "clips/clip1.mp4.mp4" },
   { title: "Clip 2", agent: "Fade", map: "Breeze ",  tag: "Clutch", type: "file", src: "clips/clip2.mp4.mp4" },
   { title: "Clip 3", agent: "Clove",  map: "Haven",  tag: "Ace",  type: "file", src: "clips/clip3.mp4.mp4" }
 ];
+/* ===== END EDIT ===== */
 
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const CAN_HOVER = matchMedia("(hover: hover)").matches;
 const grid = document.getElementById("grid");
 const filters = document.getElementById("filters");
+const viewer = document.getElementById("viewer");
+const vbody = document.getElementById("vbody");
+const vinfo = document.getElementById("vinfo");
 let active = "All";
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 }
 
-function frameHTML(c) {
-  if (c.type === "file") {
-    return `<video controls preload="metadata" src="${esc(c.src)}"></video>`;
+/* Reveal on scroll */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+  });
+}, { threshold: 0.12 });
+
+function mediaHTML(c) {
+  if (c.type === "youtube") {
+    return `<img loading="lazy" alt="" src="https://i.ytimg.com/vi/${esc(c.src)}/hqdefault.jpg">`;
   }
-  return `<iframe loading="lazy" title="${esc(c.title)}"
-    src="https://www.youtube-nocookie.com/embed/${esc(c.src)}"
-    allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  return `<video muted loop playsinline preload="metadata" src="${esc(c.src)}#t=0.5"></video>`;
 }
 
 function render() {
   const list = CLIPS.filter(c => active === "All" || c.agent === active || c.map === active);
-  grid.innerHTML = list.length ? list.map(c => `
-    <article class="clip">
-      <div class="frame">${frameHTML(c)}</div>
+  grid.innerHTML = list.length ? list.map((c, i) => `
+    <article class="clip" tabindex="0" role="button" aria-label="Watch ${esc(c.title)}" data-i="${CLIPS.indexOf(c)}">
+      <div class="frame">${mediaHTML(c)}<span class="play" aria-hidden="true"></span></div>
       <div class="info">
         <h2>${esc(c.title)}</h2>
         <p class="meta">${esc(c.agent)} on ${esc(c.map)}</p>
         <span class="badge">${esc(c.tag)}</span>
       </div>
     </article>`).join("") : `<p class="empty">No clips for this filter yet.</p>`;
+
+  grid.querySelectorAll(".clip").forEach((card, i) => {
+    card.style.setProperty("--d", (RM ? 0 : i * 90) + "ms");
+    io.observe(card);
+    const v = card.querySelector("video");
+    if (v && CAN_HOVER) {
+      card.addEventListener("pointerenter", () => { v.play().catch(() => {}); });
+      card.addEventListener("pointerleave", () => { v.pause(); v.currentTime = 0.5; });
+    }
+  });
 }
 
 function buildFilters() {
@@ -170,9 +278,86 @@ filters.addEventListener("click", e => {
   render();
 });
 
-document.getElementById("statClips").textContent = CLIPS.length;
-document.getElementById("statAces").textContent = CLIPS.filter(c => c.tag === "Ace").length;
-document.getElementById("statClutch").textContent = CLIPS.filter(c => c.tag === "Clutch").length;
+/* Viewer */
+function openClip(i) {
+  const c = CLIPS[i];
+  if (!c) return;
+  vbody.innerHTML = c.type === "youtube"
+    ? `<iframe title="${esc(c.title)}" src="https://www.youtube-nocookie.com/embed/${esc(c.src)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`
+    : `<video controls autoplay playsinline src="${esc(c.src)}"></video>`;
+  vinfo.textContent = `${c.title} | ${c.agent} on ${c.map}`;
+  viewer.showModal();
+}
+grid.addEventListener("click", e => {
+  const card = e.target.closest(".clip");
+  if (card) openClip(+card.dataset.i);
+});
+grid.addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const card = e.target.closest(".clip");
+  if (card) { e.preventDefault(); openClip(+card.dataset.i); }
+});
+document.getElementById("closeBtn").addEventListener("click", () => viewer.close());
+viewer.addEventListener("click", e => { if (e.target === viewer) viewer.close(); });
+viewer.addEventListener("close", () => { vbody.innerHTML = ""; });
+
+/* Stats count-up */
+function countUp(id, target) {
+  const el = document.getElementById(id);
+  if (RM || target === 0) { el.textContent = target; return; }
+  const start = performance.now(), dur = 900;
+  (function step(t) {
+    const p = Math.min((t - start) / dur, 1);
+    el.textContent = Math.round(target * p);
+    if (p < 1) requestAnimationFrame(step);
+  })(start);
+}
+countUp("statClips", CLIPS.length);
+countUp("statAces", CLIPS.filter(c => c.tag === "Ace").length);
+countUp("statClutch", CLIPS.filter(c => c.tag === "Clutch").length);
+document.getElementById("statRank").textContent = RANK;
+
+/* Typing subtitle */
+const sub = document.getElementById("sub");
+if (!RM) {
+  const full = sub.textContent;
+  sub.textContent = "";
+  let n = 0;
+  const t = setInterval(() => {
+    sub.textContent = full.slice(0, ++n);
+    if (n >= full.length) clearInterval(t);
+  }, 26);
+}
+
+/* Kill feed */
+const feed = document.getElementById("feed");
+const FEED = ["Ace", "1v4 Clutch", "Headshot", "Defuse", "Flick", "Spray transfer"];
+let fi = 0;
+function pushFeed() {
+  const d = document.createElement("div");
+  d.innerHTML = `<b>${esc(NAME)}</b><span>${esc(FEED[fi++ % FEED.length])}</span>`;
+  feed.appendChild(d);
+  while (feed.children.length > 5) feed.firstChild.remove();
+  if (!RM) setTimeout(() => {
+    d.classList.add("out");
+    setTimeout(() => d.remove(), 450);
+  }, 4200);
+}
+pushFeed(); pushFeed(); pushFeed();
+if (!RM) setInterval(pushFeed, 1100);
+
+/* Hit marker on click */
+if (!RM) {
+  document.addEventListener("pointerdown", e => {
+    const h = document.createElement("div");
+    h.className = "hit";
+    h.style.left = e.clientX + "px";
+    h.style.top = e.clientY + "px";
+    h.innerHTML = '<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M4 4l6 6M24 4l-6 6M4 24l6-6M24 24l-6-6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>';
+    document.body.appendChild(h);
+    setTimeout(() => h.remove(), 320);
+  });
+}
 
 buildFilters();
 render();
